@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impresora de regalos</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:transparent;font-family:"Trebuchet MS",Arial,sans-serif}
+.stage{position:absolute;left:50%;top:0;width:400px;height:630px;transform-origin:top center}
+.housing{position:absolute;z-index:5;left:30px;right:30px;top:0;height:22px;background:#17181b;border-radius:0 0 6px 6px;box-shadow:0 4px 8px rgba(0,0,0,.4)}
+.rail{position:absolute;z-index:4;top:6px;height:500px;width:12px;border-radius:6px;background:linear-gradient(90deg,#6d727a,#d5d8dc 45%,#6d727a)}
+.rail.l{left:18px}.rail.r{right:18px}
+.view{position:absolute;left:50px;top:22px;width:300px;height:480px;overflow:hidden;background:#f2efe4;box-shadow:0 0 18px rgba(0,0,0,.35)}
+.sheet{display:grid;grid-template-columns:repeat(3,100px);grid-auto-rows:120px;transition:transform .7s ease}
+.cell{padding:8px 6px}
+.tag{height:104px;box-sizing:border-box;border:1.5px solid #222;background:#f7f5ee;padding:7px 3px;text-align:center;clip-path:inset(0 0 100% 0)}
+.cell.on .tag{clip-path:inset(0);transition:clip-path .7s steps(14)}
+.av{width:62px;height:62px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 5px;border:2px solid #222;background:#cfd2d8;box-sizing:border-box}
+.fb{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:#333}
+.nm{font-size:11px;font-style:italic;font-weight:700;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm::before,.nm::after{content:"\2665";color:#e4407a;margin:0 3px}
+.gf{font-size:10px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantry{position:absolute;z-index:4;left:24px;right:24px;top:30px;height:8px;border-radius:4px;background:linear-gradient(#e1e4e8,#8a8f97);transition:top .5s ease}
+.head{position:absolute;top:-7px;left:0;width:34px;height:22px;background:#3b3f46;border-radius:4px;border-bottom:4px solid #7fb4e6;transition:left .5s ease}
+.av{position:absolute;left:36px;top:512px;width:112px;height:112px;animation:bob 2.6s ease-in-out infinite}
+.jumper{width:100%;height:100%;transform-origin:50% 100%}
+.jumper.go{animation:jump .7s ease-out 2}
+.jumper.big{animation:jump .7s ease-out 3}
+.av svg{width:100%;height:100%;overflow:visible}
+.eyes{transform-origin:60px 60px;animation:blink 4.5s infinite}
+.arm.l{transform-origin:30px 67px}.arm.r{transform-origin:90px 67px}
+.open{display:none}
+.happy .open{display:block}.happy .smile{display:none}
+.happy .arm.l{animation:waveL .35s ease-in-out 5}
+.happy .arm.r{animation:waveR .35s ease-in-out 5}
+.bubble{position:absolute;left:160px;top:522px;width:200px;box-sizing:border-box;padding:8px 12px;background:#fff;border:2px solid #222;border-radius:14px;opacity:0;transform:scale(.6);transform-origin:0 70%;transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.bubble.show{opacity:1;transform:scale(1)}
+.bubble::before{content:"";position:absolute;left:-9px;top:26px;width:14px;height:14px;background:#fff;border-left:2px solid #222;border-bottom:2px solid #222;transform:rotate(45deg)}
+.bubble b{display:block;font-size:14px;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bubble span{display:block;font-size:12px;color:#555}
+.heart{position:absolute;z-index:6;left:84px;top:520px;font-size:18px;pointer-events:none;animation:rise 1.4s ease-out both}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes jump{0%{transform:scale(1,1)}15%{transform:scale(1.1,.88)}50%{transform:translateY(-38px) scale(.94,1.06)}85%{transform:scale(1.08,.9)}100%{transform:scale(1,1)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes waveR{0%,100%{transform:rotate(0)}50%{transform:rotate(-70deg)}}
+@keyframes waveL{0%,100%{transform:rotate(0)}50%{transform:rotate(70deg)}}
+@keyframes rise{from{opacity:1;transform:translate(0,0) rotate(0)}to{opacity:0;transform:translate(var(--dx),-110px) rotate(var(--rot))}}
+@media (prefers-reduced-motion:reduce){.sheet,.gantry,.head{transition:none}.av,.jumper,.eyes,.arm{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="housing"></div>
+  <div class="rail l"></div><div class="rail r"></div>
+  <div class="view"><div class="sheet" id="sheet"></div></div>
+  <div class="gantry" id="gantry"><div class="head" id="head"></div></div>
+  <div class="av"><div class="jumper" id="jumper">
+    <svg id="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#2b2320" stroke-width="3" stroke-linecap="round">
+        <rect class="arm l" x="6" y="62" width="26" height="10" rx="5" fill="#ff7a59"/>
+        <rect class="arm r" x="88" y="62" width="26" height="10" rx="5" fill="#ff7a59"/>
+        <ellipse cx="48" cy="109" rx="10" ry="5" fill="#2b2320"/><ellipse cx="72" cy="109" rx="10" ry="5" fill="#2b2320"/>
+        <path d="M60 34 Q56 20 66 14" fill="none"/>
+        <ellipse cx="60" cy="70" rx="36" ry="38" fill="#ff7a59"/>
+      </g>
+      <circle cx="66" cy="13" r="5" fill="#ffd166" stroke="#2b2320" stroke-width="2.5"/>
+      <circle cx="38" cy="73" r="5" fill="#ff9fb0"/><circle cx="82" cy="73" r="5" fill="#ff9fb0"/>
+      <g class="eyes" fill="#2b2320"><ellipse cx="47" cy="60" rx="5" ry="6"/><ellipse cx="73" cy="60" rx="5" ry="6"/></g>
+      <path class="smile" d="M50 76 Q60 86 70 76" fill="none" stroke="#2b2320" stroke-width="3" stroke-linecap="round"/>
+      <ellipse class="open" cx="60" cy="80" rx="8" ry="7" fill="#7a1f2b" stroke="#2b2320" stroke-width="2.5"/>
+    </svg>
+  </div></div>
+  <div class="bubble" id="bubble"><b id="bName"></b><span id="bGift"></span></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const sound = new URLSearchParams(location.search).get('sound') === '1';
+const stage = document.getElementById('stage');
+const sheet = document.getElementById('sheet');
+const gantry = document.getElementById('gantry');
+const head = document.getElementById('head');
+const queue = [];
+let busy = false, shift = 0;
+
+function fit() {
+  const s = Math.min(innerWidth / 400, innerHeight / 630);
+  stage.style.transform = 'translateX(-50%) scale(' + s + ')';
+}
+addEventListener('resize', fit); fit();
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function beep() {
+  try {
+    const c = beep.c || (beep.c = new AudioContext());
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square'; o.frequency.value = 140;
+    g.gain.setValueAtTime(.05, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .7);
+    o.connect(g).connect(c.destination);
+    o.start(); o.stop(c.currentTime + .7);
+  } catch (e) {}
+}
+
+function setShift(n) {
+  shift = n;
+  sheet.style.transform = 'translateY(' + (-n * 120) + 'px)';
+}
+
+function div(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  if (text !== undefined) d.textContent = text;
+  return d;
+}
+
+function makeCell(g) {
+  const name = g.name || g.user || '?';
+  const cell = div('cell');
+  const tag = div('tag');
+  const fallback = () => div('av fb', name.trim().charAt(0).toUpperCase());
+  let av;
+  if (g.avatar) {
+    av = new Image();
+    av.className = 'av';
+    av.referrerPolicy = 'no-referrer';
+    av.onerror = () => av.replaceWith(fallback());
+    av.src = g.avatar;
+  } else {
+    av = fallback();
+  }
+  tag.append(av, div('nm', name), div('gf', g.gift + ' ×' + g.count));
+  cell.append(tag);
+  return cell;
+}
+
+const jumper = document.getElementById('jumper');
+const mascot = document.getElementById('mascot');
+const bubble = document.getElementById('bubble');
+const bName = document.getElementById('bName');
+const bGift = document.getElementById('bGift');
+const colors = ['#ff4d7d', '#ffb703', '#4cc9f0', '#ff7a59'];
+let reactTimer;
+
+function burst(n) {
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement('span');
+    h.className = 'heart';
+    h.textContent = '♥';
+    h.style.color = colors[i % colors.length];
+    h.style.left = (60 + Math.random() * 50) + 'px';
+    h.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    h.style.setProperty('--rot', (Math.random() * 120 - 60) + 'deg');
+    h.style.animationDelay = (Math.random() * .3) + 's';
+    h.addEventListener('animationend', () => h.remove());
+    stage.append(h);
+  }
+}
+
+function react(g) {
+  const big = g.count >= 10;
+  bName.textContent = '¡Gracias, ' + (g.name || g.user || '') + '!';
+  bGift.textContent = g.gift + ' ×' + g.count;
+  bubble.classList.add('show');
+  jumper.classList.remove('go', 'big');
+  mascot.classList.remove('happy');
+  void jumper.offsetWidth;
+  jumper.classList.add(big ? 'big' : 'go');
+  mascot.classList.add('happy');
+  burst(big ? 14 : 6);
+  clearTimeout(reactTimer);
+  reactTimer = setTimeout(() => {
+    bubble.classList.remove('show');
+    mascot.classList.remove('happy');
+    jumper.classList.remove('go', 'big');
+  }, 2600);
+}
+
+async function print(g) {
+  const idx = sheet.children.length;
+  const row = Math.floor(idx / 3), col = idx % 3;
+  const need = Math.max(0, row - 3);
+  if (need !== shift) { setShift(need); await sleep(750); }
+
+  gantry.style.top = (78 + (row - shift) * 120) + 'px';
+  head.style.left = (59 + col * 100) + 'px';
+  await sleep(550);
+
+  const cell = makeCell(g);
+  sheet.append(cell);
+  void cell.offsetWidth;
+  cell.classList.add('on');
+  if (sound) beep();
+  react(g);
+  await sleep(800);
+
+  if (sheet.children.length > 24) {   // quitar la fila más vieja
+    sheet.style.transition = 'none';
+    for (let i = 0; i < 3; i++) sheet.firstChild.remove();
+    setShift(shift - 1);
+    void sheet.offsetWidth;
+    sheet.style.transition = '';
+  }
+}
+
+async function run() {
+  busy = true;
+  while (queue.length) await print(queue.shift());
+  busy = false;
+  gantry.style.top = '30px';
+  head.style.left = '0px';
+}
+
+io().on('gift', g => {
+  if (queue.length > 30) queue.shift();
+  queue.push(g);
+  if (!busy) run();
+});
+</script>
+</body>
+</html>
