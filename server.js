@@ -39,9 +39,10 @@ function connect() {
     });
 
   tiktok.on('gift', d => {
-    // Regalos con racha: esperar a que termine para no duplicar
-    if (d.giftType === 1 && !d.repeatEnd) return;
+    // Se envía cada regalo; "final" indica si la racha ya terminó (para imprimir una sola vez)
+    const streakable = d.giftType === 1;
     io.emit('gift', {
+      final: !streakable || !!d.repeatEnd,
       user: d.uniqueId,
       name: d.nickname,
       avatar: d.profilePictureUrl,
